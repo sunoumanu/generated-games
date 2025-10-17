@@ -11,9 +11,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
         .game-container {
             display: flex;
@@ -22,7 +23,7 @@
             padding: 30px;
             border-radius: 20px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
         .main-area {
             display: flex;
@@ -43,18 +44,18 @@
         }
         .info-box {
             background: rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-            min-width: 150px;
+            padding: 5px;
+            border-radius: 5px;
+            min-width: 120px;
         }
         .info-box h3 {
             margin: 0 0 10px 0;
-            font-size: 18px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
         .info-box .value {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
@@ -86,7 +87,7 @@
             border-radius: 15px;
             text-align: center;
             display: none;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
         }
         #gameOver h2 {
             margin: 0 0 20px 0;
@@ -96,7 +97,7 @@
         #gameOver button {
             margin-top: 20px;
             padding: 12px 30px;
-            font-size: 18px;
+            font-size: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
