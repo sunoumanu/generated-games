@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Combat - 3D Third Person Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* HUD Styles */
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #health-container {
+            background: rgba(0,0,0,0.6);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            min-width: 250px;
+        }
+
+        #health-label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #health-bar-bg {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #555;
+        }
+
+        #health-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #ff4444, #ff6b6b);
+            transition: width 0.3s ease;
+            border-radius: 8px;
+        }
+
+        #stats-container {
+            background: rgba(0,0,0,0.6);
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .stat-row .icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .stat-label {
+            display: flex;
+            align-items: center;
+        }
+
+        #score-container {
+            background: linear-gradient(to right, rgba(255,204,0,0.3), rgba(255,153,0,0.3));
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #ffcc00;
+        }
+
+        #score-container .score-label {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        #score-container .score-value {
+            color: #fff;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        /* Game Over Screen */
+        #game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        #game-over h1 {
+            color: #ff4444;
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ff0000;
+        }
+
+        #game-over p {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        #game-over .score-breakdown {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px 40px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        #game-over .score-breakdown .score-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            margin: 8px 0;
+            color: #ccc;
+        }
+
+        #game-over .score-breakdown .score-line span:first-child {
+            margin-right: 30px;
+        }
+
+        #game-over .score-breakdown .score-line.total {
+            border-top: 2px solid #ffcc00;
+            padding-top: 10px;
+            margin-top: 15px;
+            font-size: 24px;
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        #restart-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(to bottom, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+        }
+
+        /* Instructions */
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        #instructions h3 {
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+
+        #instructions p {
+            margin: 5px 0;
+        }
+
+        .key {
+            background: #555;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            z-index: 150;
+            pointer-events: none;
+        }
+
+        #joystick-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 140px;
+            height: 140px;
+            pointer-events: auto;
+        }
+
+        #joystick-base {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+
+        #joystick-stick {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: none;
+        }
+
+        #pounce-btn {
+            position: absolute;
+            bottom: 50px;
+            right: 40px;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(255, 100, 100, 0.6), rgba(200, 50, 50, 0.6));
+            border: 3px solid rgba(255, 150, 150, 0.8);
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        #pounce-btn:active {
+            background: linear-gradient(to bottom, rgba(255, 150, 150, 0.8), rgba(255, 100, 100, 0.8));
+            transform: scale(0.95);
+        }
+
+        #pounce-btn .btn-icon {
+            font-size: 28px;
+            margin-bottom: 2px;
+        }
+
+        #pounce-btn.cooldown {
+            background: linear-gradient(to bottom, rgba(100, 100, 100, 0.6), rgba(70, 70, 70, 0.6));
+            border-color: rgba(150, 150, 150, 0.5);
+        }
+
+        /* Camera control area for mobile (right side of screen, above pounce button) */
+        #camera-touch-area {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: calc(100% - 200px);
+            pointer-events: auto;
+        }
+
+        /* Hide instructions on mobile */
+        @media (max-width: 768px), (pointer: coarse) {
+            #instructions {
+                display: none;
+            }
+
+            #mobile-controls {
+                display: block;
+            }
+
+            #hud {
+                top: 10px;
+                left: 10px;
+            }
+
+            #health-container {
+                min-width: 180px;
+                padding: 8px 12px;
+            }
+
+            #stats-container {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            #score-container {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
+
+            #score-container .score-value {
+                font-size: 20px;
+            }
+
+            #game-over h1 {
+                font-size: 42px;
+            }
+
+            #game-over p {
+                font-size: 18px;
+            }
+
+            #game-over .score-breakdown {
+                padding: 15px 20px;
+            }
+
+            #game-over .score-breakdown .score-line {
+                font-size: 14px;
+            }
+
+            #game-over .score-breakdown .score-line.total {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div id="health-container">
+            <div id="health-label">
+                <span>HP</span>
+                <span id="health-text">100 / 100</span>
+            </div>
+            <div id="health-bar-bg">
+                <div id="health-bar"></div>
+            </div>
+        </div>
+        <div id="stats-container">
+            <div class="stat-row">
+                <span class="stat-label"><span class="icon">🐱</span> Cats Defeated:</span>
+                <strong id="cats-defeated">0</strong>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label"><span class="icon">🐭</span> Mice Caught:</span>
+                <strong id="mice-count">0</strong>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label"><span class="icon">⏱️</span> Time:</span>
+                <strong id="time-played">0:00</strong>
+            </div>
+        </div>
+        <div id="score-container">
+            <span class="score-label">SCORE</span>
+            <span class="score-value" id="total-score">0</span>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div id="instructions">
+        <h3>Controls</h3>
+        <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> - Move</p>
+        <p><span class="key">Space</span> / <span class="key">Click</span> - Pounce Attack</p>
+        <p><span class="key">Mouse</span> - Look Around</p>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+        <div id="camera-touch-area"></div>
+        <div id="joystick-container">
+            <div id="joystick-base"></div>
+            <div id="joystick-stick"></div>
+        </div>
+        <div id="pounce-btn">
+            <span class="btn-icon">🐾</span>
+            <span>POUNCE</span>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over">
+        <h1>GAME OVER</h1>
+        <p>You were defeated by the rival cats!</p>
+        <div class="score-breakdown">
+            <div class="score-line">
+                <span>🐱 Cats Defeated (<span id="final-cats">0</span> x 100)</span>
+                <span id="final-cats-score">0</span>
+            </div>
+            <div class="score-line">
+                <span>🐭 Mice Caught (<span id="final-mice">0</span> x 50)</span>
+                <span id="final-mice-score">0</span>
+            </div>
+            <div class="score-line">
+                <span>⏱️ Time Survived (<span id="final-time">0:00</span>)</span>
+                <span id="final-time-score">0</span>
+            </div>
+            <div class="score-line total">
+                <span>TOTAL SCORE</span>
+                <span id="final-total-score">0</span>
+            </div>
+        </div>
+        <button id="restart-btn">Play Again</button>
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // ============================================
+        // CAT COMBAT - 3D Third Person Game
+        // ============================================
+
+        // ----- GAME CONFIGURATION -----
+        const CONFIG = {
+            // Player settings
+            player: {
+                speed: 8,
+                acceleration: 25,       // How fast player reaches top speed
+                friction: 8,            // How fast player slows down
+                pounceForce: 18,        // Increased pounce force
+                pounceCooldown: 1000,   // ms
+                pounceRange: 4.5,       // Increased from 3
+                pounceDamage: 25,
+                maxHealth: 100
+            },
+            // Enemy settings
+            enemy: {
+                startCount: 2,          // Start with 2 enemies
+                maxCount: 6,            // Maximum enemies (reduced from 8)
+                spawnInterval: 30000,   // Spawn new enemy every 30 seconds (was 15)
+                speed: 5,               // Slower than player (player is 8)
+                acceleration: 15,       // Enemies accelerate slower than player
+                friction: 5,            // Enemies slow down slower (slide more)
+                pounceRange: 4,         // Range at which enemy will pounce
+                pounceForce: 10,        // Enemy pounce force (weaker than player)
+                detectionRange: 10,     // Slightly reduced detection range
+                damage: 12,             // Slightly reduced damage (was 15)
+                attackCooldown: 2500,   // Pounce cooldown (ms)
+                wanderRadius: 15
+            },
+            // Mouse pickup settings
+            mouse: {
+                count: 8,
+                healAmount: 20,
+                respawnTime: 5000 // ms
+            },
+            // Arena settings
+            arena: {
+                size: 40,
+                wallHeight: 3
+            },
+            // Camera settings
+            camera: {
+                distance: 12,
+                height: 8,
+                smoothing: 0.1
+            }
+        };
+
+        // ----- GAME STATE -----
+        const gameState = {
+            playerHealth: CONFIG.player.maxHealth,
+            miceCaught: 0,
+            catsDefeated: 0,
+            startTime: 0,
+            timePlayed: 0,
+            isGameOver: false,
+            isPouncing: false,
+            canPounce: true,
+            keys: {},
+            mousePosition: { x: 0, y: 0 },
+            cameraAngle: 0,
+            enemySpawnTimer: null,
+            currentEnemyCount: CONFIG.enemy.startCount
+        };
+
+        // ----- SCORE CONFIGURATION -----
+        const SCORE = {
+            perCatDefeated: 100,
+            perMouseCaught: 50,
+            perSecondSurvived: 1
+        };
+
+        // ----- THREE.JS SETUP -----
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Sky blue
+        scene.fog = new THREE.Fog(0x87CEEB, 30, 80);
+
+        const camera = new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('game-container').appendChild(renderer.domElement);
+
+        // ----- LIGHTING -----
+        // Ambient light for base illumination
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+
+        // Directional light (sun)
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(20, 30, 10);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 100;
+        sunLight.shadow.camera.left = -50;
+        sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50;
+        sunLight.shadow.camera.bottom = -50;
+        scene.add(sunLight);
+
+        // Hemisphere light for sky/ground color
+        const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3d5c3d, 0.4);
+        scene.add(hemiLight);
+
+        // ----- MATERIALS -----
+        const materials = {
+            // Player cat - Orange tabby
+            playerBody: new THREE.MeshLambertMaterial({ color: 0xff8c00 }),
+            playerStripes: new THREE.MeshLambertMaterial({ color: 0xcc6600 }),
+            playerEyes: new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
+            playerNose: new THREE.MeshLambertMaterial({ color: 0xff69b4 }),
+
+            // Enemy cat - Gray (base colors, will be modified by damage)
+            enemyBody: new THREE.MeshLambertMaterial({ color: 0x666666 }),
+            enemyStripes: new THREE.MeshLambertMaterial({ color: 0x444444 }),
+            enemyEyes: new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+            enemyNose: new THREE.MeshLambertMaterial({ color: 0x333333 }),
+
+            // Damage/blood colors for enemies (progressively more damaged)
+            enemyDamaged1Body: new THREE.MeshLambertMaterial({ color: 0x665555 }),
+            enemyDamaged1Stripes: new THREE.MeshLambertMaterial({ color: 0x553333 }),
+            enemyDamaged2Body: new THREE.MeshLambertMaterial({ color: 0x664444 }),
+            enemyDamaged2Stripes: new THREE.MeshLambertMaterial({ color: 0x552222 }),
+            enemyDamaged3Body: new THREE.MeshLambertMaterial({ color: 0x663333 }),
+            enemyDamaged3Stripes: new THREE.MeshLambertMaterial({ color: 0x441111 }),
+
+            // Mouse
+            mouseBody: new THREE.MeshLambertMaterial({ color: 0x8B7355 }),
+            mouseEars: new THREE.MeshLambertMaterial({ color: 0xffb6c1 }),
+
+            // Environment
+            ground: new THREE.MeshLambertMaterial({ color: 0x3d5c3d }),
+            crate: new THREE.MeshLambertMaterial({ color: 0x8B4513 }),
+            wall: new THREE.MeshLambertMaterial({ color: 0x696969 })
+        };
+
+        // ============================================
+        // CAT MODEL BUILDER
+        // ============================================
+
+        /**
+         * Creates a cat model made of cubes
+         * @param {boolean} isEnemy - Whether this is an enemy cat
+         * @returns {THREE.Group} The cat model group
+         */
+        function createCatModel(isEnemy = false) {
+            const cat = new THREE.Group();
+
+            const bodyMat = isEnemy ? materials.enemyBody : materials.playerBody;
+            const stripesMat = isEnemy ? materials.enemyStripes : materials.playerStripes;
+            const eyesMat = isEnemy ? materials.enemyEyes : materials.playerEyes;
+            const noseMat = isEnemy ? materials.enemyNose : materials.playerNose;
+
+            // Body (main torso)
+            const bodyGeom = new THREE.BoxGeometry(1.2, 0.8, 2);
+            const body = new THREE.Mesh(bodyGeom, bodyMat);
+            body.position.set(0, 0.6, 0);
+            body.castShadow = true;
+            body.receiveShadow = true;
+            body.userData.partType = 'body';
+            cat.add(body);
+
+            // Head
+            const headGeom = new THREE.BoxGeometry(0.9, 0.7, 0.8);
+            const head = new THREE.Mesh(headGeom, bodyMat);
+            head.position.set(0, 1.0, 1.2);
+            head.castShadow = true;
+            head.userData.partType = 'body';
+            cat.add(head);
+            cat.userData.head = head;
+
+            // Ears
+            const earGeom = new THREE.BoxGeometry(0.2, 0.3, 0.15);
+            const leftEar = new THREE.Mesh(earGeom, stripesMat);
+            leftEar.position.set(-0.3, 1.45, 1.2);
+            leftEar.rotation.z = -0.3;
+            leftEar.userData.partType = 'stripes';
+            cat.add(leftEar);
+
+            const rightEar = new THREE.Mesh(earGeom, stripesMat);
+            rightEar.position.set(0.3, 1.45, 1.2);
+            rightEar.rotation.z = 0.3;
+            rightEar.userData.partType = 'stripes';
+            cat.add(rightEar);
+
+            // Eyes
+            const eyeGeom = new THREE.BoxGeometry(0.15, 0.12, 0.05);
+            const leftEye = new THREE.Mesh(eyeGeom, eyesMat);
+            leftEye.position.set(-0.2, 1.05, 1.6);
+            cat.add(leftEye);
+
+            const rightEye = new THREE.Mesh(eyeGeom, eyesMat);
+            rightEye.position.set(0.2, 1.05, 1.6);
+            cat.add(rightEye);
+
+            // Nose
+            const noseGeom = new THREE.BoxGeometry(0.1, 0.08, 0.05);
+            const nose = new THREE.Mesh(noseGeom, noseMat);
+            nose.position.set(0, 0.9, 1.6);
+            cat.add(nose);
+
+            // Legs
+            const legGeom = new THREE.BoxGeometry(0.25, 0.5, 0.25);
+            const legPositions = [
+                [-0.35, 0.25, 0.6],  // Front left
+                [0.35, 0.25, 0.6],   // Front right
+                [-0.35, 0.25, -0.6], // Back left
+                [0.35, 0.25, -0.6]   // Back right
+            ];
+
+            const legs = [];
+            legPositions.forEach((pos, index) => {
+                const leg = new THREE.Mesh(legGeom, stripesMat);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                leg.userData.partType = 'stripes';
+                cat.add(leg);
+                legs.push(leg);
+            });
+            cat.userData.legs = legs;
+
+            // Tail
+            const tailGeom = new THREE.BoxGeometry(0.15, 0.15, 1);
+            const tail = new THREE.Mesh(tailGeom, stripesMat);
+            tail.position.set(0, 0.8, -1.3);
+            tail.rotation.x = -0.5;
+            tail.userData.partType = 'stripes';
+            cat.add(tail);
+            cat.userData.tail = tail;
+
+            // Animation state
+            cat.userData.animTime = 0;
+            cat.userData.isMoving = false;
+
+            return cat;
+        }
+
+        /**
+         * Animates cat walking motion
+         * @param {THREE.Group} cat - The cat to animate
+         * @param {number} delta - Time delta
+         * @param {boolean} isMoving - Whether the cat is moving
+         */
+        function animateCat(cat, delta, isMoving) {
+            if (!cat.userData.legs) return;
+
+            cat.userData.isMoving = isMoving;
+
+            if (isMoving) {
+                cat.userData.animTime += delta * 10;
+
+                // Leg animation
+                const legSwing = Math.sin(cat.userData.animTime) * 0.4;
+                cat.userData.legs[0].rotation.x = legSwing;
+                cat.userData.legs[1].rotation.x = -legSwing;
+                cat.userData.legs[2].rotation.x = -legSwing;
+                cat.userData.legs[3].rotation.x = legSwing;
+
+                // Body bob
+                cat.userData.legs.forEach(leg => {
+                    leg.position.y = 0.25 + Math.abs(Math.sin(cat.userData.animTime)) * 0.05;
+                });
+            } else {
+                // Reset to idle
+                cat.userData.legs.forEach(leg => {
+                    leg.rotation.x = 0;
+                    leg.position.y = 0.25;
+                });
+            }
+
+            // Tail sway
+            if (cat.userData.tail) {
+                cat.userData.tail.rotation.y = Math.sin(cat.userData.animTime * 0.5) * 0.3;
+            }
+        }
+
+        // ============================================
+        // MOUSE MODEL BUILDER
+        // ============================================
+
+        /**
+         * Creates a mouse pickup model
+         * @returns {THREE.Group} The mouse model
+         */
+        function createMouseModel() {
+            const mouse = new THREE.Group();
+
+            // Body
+            const bodyGeom = new THREE.BoxGeometry(0.3, 0.2, 0.5);
+            const body = new THREE.Mesh(bodyGeom, materials.mouseBody);
+            body.position.set(0, 0.15, 0);
+            body.castShadow = true;
+            mouse.add(body);
+
+            // Head
+            const headGeom = new THREE.BoxGeometry(0.2, 0.15, 0.2);
+            const head = new THREE.Mesh(headGeom, materials.mouseBody);
+            head.position.set(0, 0.15, 0.3);
+            mouse.add(head);
+
+            // Ears
+            const earGeom = new THREE.BoxGeometry(0.1, 0.1, 0.05);
+            const leftEar = new THREE.Mesh(earGeom, materials.mouseEars);
+            leftEar.position.set(-0.1, 0.25, 0.3);
+            mouse.add(leftEar);
+
+            const rightEar = new THREE.Mesh(earGeom, materials.mouseEars);
+            rightEar.position.set(0.1, 0.25, 0.3);
+            mouse.add(rightEar);
+
+            // Tail
+            const tailGeom = new THREE.BoxGeometry(0.05, 0.05, 0.4);
+            const tail = new THREE.Mesh(tailGeom, materials.mouseEars);
+            tail.position.set(0, 0.1, -0.4);
+            mouse.add(tail);
+
+            mouse.userData.animTime = Math.random() * Math.PI * 2;
+
+            return mouse;
+        }
+
+        // ============================================
+        // ENVIRONMENT BUILDER
+        // ============================================
+
+        /**
+         * Creates the arena floor
+         */
+        function createGround() {
+            const groundGeom = new THREE.PlaneGeometry(
+                CONFIG.arena.size * 2,
+                CONFIG.arena.size * 2
+            );
+            const ground = new THREE.Mesh(groundGeom, materials.ground);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Add grass texture pattern
+            const grassPatternGeom = new THREE.PlaneGeometry(
+                CONFIG.arena.size * 2,
+                CONFIG.arena.size * 2,
+                20,
+                20
+            );
+            const grassPattern = new THREE.Mesh(
+                grassPatternGeom,
+                new THREE.MeshLambertMaterial({
+                    color: 0x4a7c3f,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            grassPattern.rotation.x = -Math.PI / 2;
+            grassPattern.position.y = 0.01;
+            scene.add(grassPattern);
+        }
+
+        /**
+         * Creates arena walls
+         */
+        function createWalls() {
+            const wallGeom = new THREE.BoxGeometry(
+                CONFIG.arena.size * 2,
+                CONFIG.arena.wallHeight,
+                1
+            );
+
+            // North wall
+            const northWall = new THREE.Mesh(wallGeom, materials.wall);
+            northWall.position.set(0, CONFIG.arena.wallHeight / 2, -CONFIG.arena.size);
+            northWall.castShadow = true;
+            northWall.receiveShadow = true;
+            scene.add(northWall);
+            obstacles.push(northWall);
+
+            // South wall
+            const southWall = new THREE.Mesh(wallGeom, materials.wall);
+            southWall.position.set(0, CONFIG.arena.wallHeight / 2, CONFIG.arena.size);
+            southWall.castShadow = true;
+            southWall.receiveShadow = true;
+            scene.add(southWall);
+            obstacles.push(southWall);
+
+            // East wall
+            const eastWallGeom = new THREE.BoxGeometry(
+                1,
+                CONFIG.arena.wallHeight,
+                CONFIG.arena.size * 2
+            );
+            const eastWall = new THREE.Mesh(eastWallGeom, materials.wall);
+            eastWall.position.set(CONFIG.arena.size, CONFIG.arena.wallHeight / 2, 0);
+            eastWall.castShadow = true;
+            eastWall.receiveShadow = true;
+            scene.add(eastWall);
+            obstacles.push(eastWall);
+
+            // West wall
+            const westWall = new THREE.Mesh(eastWallGeom, materials.wall);
+            westWall.position.set(-CONFIG.arena.size, CONFIG.arena.wallHeight / 2, 0);
+            westWall.castShadow = true;
+            westWall.receiveShadow = true;
+            scene.add(westWall);
+            obstacles.push(westWall);
+        }
+
+        /**
+         * Creates crate obstacles
+         */
+        function createCrates() {
+            const cratePositions = [
+                [10, 5],
+                [-8, -12],
+                [15, -8],
+                [-15, 10],
+                [0, -18],
+                [-5, 15],
+                [18, 15],
+                [-18, -15]
+            ];
+
+            cratePositions.forEach(pos => {
+                const size = 1.5 + Math.random() * 1.5;
+                const height = 1 + Math.random() * 2;
+                const crateGeom = new THREE.BoxGeometry(size, height, size);
+                const crate = new THREE.Mesh(crateGeom, materials.crate);
+                crate.position.set(pos[0], height / 2, pos[1]);
+                crate.castShadow = true;
+                crate.receiveShadow = true;
+
+                // Add slight rotation for variety
+                crate.rotation.y = Math.random() * 0.5;
+
+                scene.add(crate);
+                obstacles.push(crate);
+
+                // Store crate bounds for collision
+                crate.userData.bounds = {
+                    minX: pos[0] - size / 2,
+                    maxX: pos[0] + size / 2,
+                    minZ: pos[1] - size / 2,
+                    maxZ: pos[1] + size / 2
+                };
+            });
+        }
+
+        // ============================================
+        // GAME ENTITIES
+        // ============================================
+
+        // Entity arrays
+        const obstacles = [];
+        const enemies = [];
+        const mice = [];
+
+        // Player
+        let player;
+
+        /**
+         * Initializes the player cat
+         */
+        function createPlayer() {
+            player = createCatModel(false);
+            player.position.set(0, 0, 0);
+            scene.add(player);
+
+            player.userData.velocity = new THREE.Vector3();
+            player.userData.pounceDirection = new THREE.Vector3();
+        }
+
+        /**
+         * Creates initial enemy cats
+         */
+        function createEnemies() {
+            for (let i = 0; i < gameState.currentEnemyCount; i++) {
+                spawnSingleEnemy(i, gameState.currentEnemyCount);
+            }
+
+            // Start the gradual spawn timer
+            startEnemySpawnTimer();
+        }
+
+        /**
+         * Spawns a single enemy at a position
+         * @param {number} index - Enemy index for positioning
+         * @param {number} total - Total enemies for angle calculation
+         */
+        function spawnSingleEnemy(index, total) {
+            const enemy = createCatModel(true);
+
+            // Random position around the arena
+            const angle = (index / total) * Math.PI * 2 + Math.random() * 0.5;
+            const radius = 15 + Math.random() * 10;
+            enemy.position.set(
+                Math.cos(angle) * radius,
+                0,
+                Math.sin(angle) * radius
+            );
+
+            enemy.userData.state = 'wander';
+            enemy.userData.wanderTarget = new THREE.Vector3();
+            enemy.userData.lastAttackTime = 0;
+            enemy.userData.health = 100;
+            enemy.userData.velocity = new THREE.Vector3();
+            enemy.userData.isPouncing = false;
+            enemy.userData.canPounce = true;
+
+            setNewWanderTarget(enemy);
+
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        /**
+         * Starts the timer to gradually spawn more enemies
+         */
+        function startEnemySpawnTimer() {
+            // Clear any existing timer
+            if (gameState.enemySpawnTimer) {
+                clearInterval(gameState.enemySpawnTimer);
+            }
+
+            gameState.enemySpawnTimer = setInterval(() => {
+                if (gameState.isGameOver) {
+                    clearInterval(gameState.enemySpawnTimer);
+                    return;
+                }
+
+                // Only spawn if under max count
+                if (enemies.length < CONFIG.enemy.maxCount) {
+                    spawnSingleEnemy(enemies.length, CONFIG.enemy.maxCount);
+                    gameState.currentEnemyCount = enemies.length;
+                }
+            }, CONFIG.enemy.spawnInterval);
+        }
+
+        /**
+         * Sets a new wander target for an enemy
+         * @param {THREE.Group} enemy - The enemy cat
+         */
+        function setNewWanderTarget(enemy) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * CONFIG.enemy.wanderRadius;
+            enemy.userData.wanderTarget.set(
+                Math.cos(angle) * radius,
+                0,
+                Math.sin(angle) * radius
+            );
+        }
+
+        /**
+         * Spawns mice pickups
+         */
+        function spawnMice() {
+            for (let i = 0; i < CONFIG.mouse.count; i++) {
+                spawnMouse();
+            }
+        }
+
+        /**
+         * Spawns a single mouse at a random position
+         */
+        function spawnMouse() {
+            const mouse = createMouseModel();
+
+            // Random position within arena
+            const x = (Math.random() - 0.5) * (CONFIG.arena.size - 5) * 2;
+            const z = (Math.random() - 0.5) * (CONFIG.arena.size - 5) * 2;
+            mouse.position.set(x, 0, z);
+
+            mouse.userData.active = true;
+
+            scene.add(mouse);
+            mice.push(mouse);
+        }
+
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+
+        /**
+         * Sets up keyboard event listeners
+         */
+        // ----- MOBILE CONTROLS STATE -----
+        const mobileState = {
+            isMobile: false,
+            joystickActive: false,
+            joystickTouchId: null,
+            joystickX: 0,
+            joystickY: 0,
+            cameraTouchId: null,
+            lastCameraX: 0
+        };
+
+        /**
+         * Detects if the device is mobile/touch
+         */
+        function detectMobile() {
+            mobileState.isMobile = (
+                'ontouchstart' in window ||
+                navigator.maxTouchPoints > 0 ||
+                window.matchMedia('(pointer: coarse)').matches
+            );
+            return mobileState.isMobile;
+        }
+
+        /**
+         * Sets up keyboard and mouse event listeners
+         */
+        function setupInput() {
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.code] = true;
+
+                // Pounce on space
+                if (e.code === 'Space' && !gameState.isGameOver) {
+                    e.preventDefault();
+                    triggerPounce();
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.code] = false;
+            });
+
+            // Mouse movement for camera
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === renderer.domElement) {
+                    gameState.cameraAngle -= e.movementX * 0.003;
+                }
+            });
+
+            // Click to lock pointer and pounce
+            renderer.domElement.addEventListener('click', () => {
+                if (!gameState.isGameOver && !mobileState.isMobile) {
+                    if (document.pointerLockElement !== renderer.domElement) {
+                        renderer.domElement.requestPointerLock();
+                    } else {
+                        triggerPounce();
+                    }
+                }
+            });
+
+            // Restart button
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+            // Setup mobile controls if on mobile device
+            if (detectMobile()) {
+                setupMobileControls();
+            }
+        }
+
+        /**
+         * Sets up mobile touch controls
+         */
+        function setupMobileControls() {
+            const joystickContainer = document.getElementById('joystick-container');
+            const joystickStick = document.getElementById('joystick-stick');
+            const joystickBase = document.getElementById('joystick-base');
+            const pounceBtn = document.getElementById('pounce-btn');
+            const cameraTouchArea = document.getElementById('camera-touch-area');
+
+            const joystickRadius = 70; // Half of joystick base size
+            const stickRadius = 30;    // Half of stick size
+            const maxStickDistance = joystickRadius - stickRadius + 10;
+
+            // ----- JOYSTICK TOUCH HANDLING -----
+            joystickContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.isGameOver) return;
+
+                const touch = e.changedTouches[0];
+                mobileState.joystickActive = true;
+                mobileState.joystickTouchId = touch.identifier;
+
+                updateJoystickPosition(touch);
+            }, { passive: false });
+
+            joystickContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!mobileState.joystickActive) return;
+
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === mobileState.joystickTouchId) {
+                        updateJoystickPosition(touch);
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            joystickContainer.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === mobileState.joystickTouchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            });
+
+            joystickContainer.addEventListener('touchcancel', (e) => {
+                resetJoystick();
+            });
+
+            function updateJoystickPosition(touch) {
+                const rect = joystickBase.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let deltaX = touch.clientX - centerX;
+                let deltaY = touch.clientY - centerY;
+
+                // Calculate distance from center
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                // Clamp to max distance
+                if (distance > maxStickDistance) {
+                    deltaX = (deltaX / distance) * maxStickDistance;
+                    deltaY = (deltaY / distance) * maxStickDistance;
+                }
+
+                // Update stick visual position
+                joystickStick.style.left = `calc(50% + ${deltaX}px)`;
+                joystickStick.style.top = `calc(50% + ${deltaY}px)`;
+
+                // Normalize joystick values (-1 to 1)
+                mobileState.joystickX = deltaX / maxStickDistance;
+                mobileState.joystickY = deltaY / maxStickDistance;
+            }
+
+            function resetJoystick() {
+                mobileState.joystickActive = false;
+                mobileState.joystickTouchId = null;
+                mobileState.joystickX = 0;
+                mobileState.joystickY = 0;
+
+                // Reset stick visual position
+                joystickStick.style.left = '50%';
+                joystickStick.style.top = '50%';
+            }
+
+            // ----- POUNCE BUTTON -----
+            pounceBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.isGameOver) return;
+                triggerPounce();
+
+                // Visual feedback for cooldown
+                if (!gameState.canPounce) {
+                    pounceBtn.classList.add('cooldown');
+                }
+            }, { passive: false });
+
+            // Update pounce button cooldown visual
+            const originalTriggerPounce = triggerPounce;
+
+            // ----- CAMERA TOUCH AREA -----
+            cameraTouchArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.isGameOver) return;
+
+                const touch = e.changedTouches[0];
+                mobileState.cameraTouchId = touch.identifier;
+                mobileState.lastCameraX = touch.clientX;
+            }, { passive: false });
+
+            cameraTouchArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (mobileState.cameraTouchId === null) return;
+
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === mobileState.cameraTouchId) {
+                        const deltaX = touch.clientX - mobileState.lastCameraX;
+                        gameState.cameraAngle -= deltaX * 0.008;
+                        mobileState.lastCameraX = touch.clientX;
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            cameraTouchArea.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === mobileState.cameraTouchId) {
+                        mobileState.cameraTouchId = null;
+                        break;
+                    }
+                }
+            });
+
+            cameraTouchArea.addEventListener('touchcancel', () => {
+                mobileState.cameraTouchId = null;
+            });
+
+            // Prevent default touch behavior on the game canvas
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+
+            console.log('📱 Mobile controls enabled');
+        }
+
+        /**
+         * Updates pounce button cooldown visual
+         */
+        function updatePounceCooldownVisual() {
+            const pounceBtn = document.getElementById('pounce-btn');
+            if (pounceBtn) {
+                if (gameState.canPounce) {
+                    pounceBtn.classList.remove('cooldown');
+                } else {
+                    pounceBtn.classList.add('cooldown');
+                }
+            }
+        }
+
+        /**
+         * Triggers player pounce attack
+         */
+        function triggerPounce() {
+            if (!gameState.canPounce || gameState.isPouncing) return;
+
+            gameState.isPouncing = true;
+            gameState.canPounce = false;
+
+            // Set pounce direction based on player facing
+            player.userData.pounceDirection.set(0, 0, 1);
+            player.userData.pounceDirection.applyQuaternion(player.quaternion);
+            player.userData.pounceDirection.y = 0.3; // Add upward arc
+            player.userData.pounceDirection.normalize();
+
+            // Apply pounce velocity
+            player.userData.velocity.copy(player.userData.pounceDirection);
+            player.userData.velocity.multiplyScalar(CONFIG.player.pounceForce);
+
+            // Check for enemy hits
+            enemies.forEach(enemy => {
+                const distance = player.position.distanceTo(enemy.position);
+                if (distance < CONFIG.player.pounceRange) {
+                    // Damage enemy
+                    enemy.userData.health -= CONFIG.player.pounceDamage;
+
+                    // Knockback
+                    const knockback = new THREE.Vector3();
+                    knockback.subVectors(enemy.position, player.position);
+                    knockback.normalize();
+                    knockback.multiplyScalar(5);
+                    enemy.userData.velocity.add(knockback);
+
+                    // Flash red then apply permanent damage visuals
+                    flashEntity(enemy, 0xff0000);
+
+                    // Apply damage visuals (blood/scars) and slowdown
+                    setTimeout(() => {
+                        if (enemy.userData.health > 0) {
+                            applyDamageVisuals(enemy);
+                        }
+                    }, 150); // After flash ends
+
+                    // Check if enemy defeated
+                    if (enemy.userData.health <= 0) {
+                        defeatEnemy(enemy);
+                    }
+                }
+            });
+
+            // Pounce cooldown
+            setTimeout(() => {
+                gameState.isPouncing = false;
+            }, 300);
+
+            setTimeout(() => {
+                gameState.canPounce = true;
+                updatePounceCooldownVisual();
+            }, CONFIG.player.pounceCooldown);
+
+            // Update mobile pounce button visual
+            updatePounceCooldownVisual();
+        }
+
+        /**
+         * Flashes an entity a color
+         * @param {THREE.Group} entity - The entity to flash
+         * @param {number} color - The hex color
+         */
+        function flashEntity(entity, color) {
+            // If already flashing, cancel the previous flash timer
+            if (entity.userData.flashTimeout) {
+                clearTimeout(entity.userData.flashTimeout);
+            }
+
+            // Store current materials (which may be damaged materials) if not already flashing
+            if (!entity.userData.isFlashing) {
+                entity.userData.preFlashMaterials = [];
+                entity.traverse(child => {
+                    if (child.isMesh && !child.userData.isBloodSplatter) {
+                        entity.userData.preFlashMaterials.push({
+                            mesh: child,
+                            material: child.material
+                        });
+                    }
+                });
+            }
+
+            // Apply flash color
+            entity.userData.isFlashing = true;
+            entity.traverse(child => {
+                if (child.isMesh && !child.userData.isBloodSplatter) {
+                    child.material = new THREE.MeshBasicMaterial({ color: color });
+                }
+            });
+
+            // Restore pre-flash materials after delay
+            entity.userData.flashTimeout = setTimeout(() => {
+                if (entity.userData.preFlashMaterials) {
+                    entity.userData.preFlashMaterials.forEach(item => {
+                        // Dispose the flash material
+                        if (item.mesh.material) {
+                            item.mesh.material.dispose();
+                        }
+                        // Restore pre-flash material
+                        item.mesh.material = item.material;
+                    });
+                }
+                entity.userData.isFlashing = false;
+                entity.userData.flashTimeout = null;
+            }, 100);
+        }
+
+        /**
+         * Applies damage visual effects to an enemy (battle scars/blood)
+         * Also applies slowdown based on damage taken
+         * @param {THREE.Group} enemy - The enemy to update
+         */
+        function applyDamageVisuals(enemy) {
+            const healthPercent = enemy.userData.health / 100;
+
+            // Calculate damage level (0 = full health, 3 = near death)
+            let damageLevel = 0;
+            if (healthPercent <= 0.25) {
+                damageLevel = 3;
+            } else if (healthPercent <= 0.50) {
+                damageLevel = 2;
+            } else if (healthPercent <= 0.75) {
+                damageLevel = 1;
+            }
+
+            // Store the damage level for speed calculation
+            enemy.userData.damageLevel = damageLevel;
+
+            // Skip if no damage or already at this level
+            if (damageLevel === 0 || enemy.userData.currentDamageLevel === damageLevel) {
+                return;
+            }
+            enemy.userData.currentDamageLevel = damageLevel;
+
+            // Get the appropriate damaged materials
+            let bodyMat, stripesMat;
+            switch (damageLevel) {
+                case 1:
+                    bodyMat = materials.enemyDamaged1Body;
+                    stripesMat = materials.enemyDamaged1Stripes;
+                    break;
+                case 2:
+                    bodyMat = materials.enemyDamaged2Body;
+                    stripesMat = materials.enemyDamaged2Stripes;
+                    break;
+                case 3:
+                    bodyMat = materials.enemyDamaged3Body;
+                    stripesMat = materials.enemyDamaged3Stripes;
+                    break;
+                default:
+                    return;
+            }
+
+            // Apply damaged materials to body parts
+            enemy.traverse(child => {
+                if (child.isMesh && child.userData.partType) {
+                    if (child.userData.partType === 'body') {
+                        child.material = bodyMat;
+                    } else if (child.userData.partType === 'stripes') {
+                        child.material = stripesMat;
+                    }
+                }
+            });
+
+            // Add blood splatter marks based on damage level
+            addBloodSplatters(enemy, damageLevel);
+        }
+
+        /**
+         * Adds blood splatter meshes to a damaged enemy
+         * @param {THREE.Group} enemy - The enemy
+         * @param {number} level - Damage level (1-3)
+         */
+        function addBloodSplatters(enemy, level) {
+            // Remove existing splatters
+            const existingSplatters = [];
+            enemy.traverse(child => {
+                if (child.userData.isBloodSplatter) {
+                    existingSplatters.push(child);
+                }
+            });
+            existingSplatters.forEach(s => enemy.remove(s));
+
+            // Blood splatter material
+            const bloodMat = new THREE.MeshBasicMaterial({
+                color: 0x8B0000,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            // Add splatters based on damage level
+            const splatterPositions = [
+                // Level 1 - minor scratches
+                [{ x: 0.4, y: 0.7, z: 0.3, size: 0.15 }],
+                // Level 2 - more wounds
+                [
+                    { x: 0.4, y: 0.7, z: 0.3, size: 0.15 },
+                    { x: -0.3, y: 0.5, z: -0.2, size: 0.2 },
+                    { x: 0.2, y: 0.9, z: 0.8, size: 0.12 }
+                ],
+                // Level 3 - heavily wounded
+                [
+                    { x: 0.4, y: 0.7, z: 0.3, size: 0.18 },
+                    { x: -0.3, y: 0.5, z: -0.2, size: 0.22 },
+                    { x: 0.2, y: 0.9, z: 0.8, size: 0.15 },
+                    { x: -0.4, y: 0.6, z: 0.5, size: 0.2 },
+                    { x: 0.1, y: 0.4, z: -0.5, size: 0.18 },
+                    { x: 0, y: 1.0, z: 1.0, size: 0.1 }
+                ]
+            ];
+
+            const positions = splatterPositions[level - 1] || [];
+            positions.forEach(pos => {
+                const splatterGeom = new THREE.BoxGeometry(pos.size, pos.size * 0.3, pos.size);
+                const splatter = new THREE.Mesh(splatterGeom, bloodMat);
+                splatter.position.set(pos.x, pos.y, pos.z);
+                splatter.rotation.set(
+                    Math.random() * 0.5,
+                    Math.random() * Math.PI,
+                    Math.random() * 0.5
+                );
+                splatter.userData.isBloodSplatter = true;
+                enemy.add(splatter);
+            });
+        }
+
+        /**
+         * Handles enemy defeat
+         * @param {THREE.Group} enemy - The defeated enemy
+         */
+        // Array to track dying enemies for animation
+        const dyingEnemies = [];
+
+        /**
+         * Handles enemy defeat - starts death animation
+         * @param {THREE.Group} enemy - The defeated enemy
+         */
+        function defeatEnemy(enemy) {
+            // Remove from active enemies array
+            const index = enemies.indexOf(enemy);
+            if (index > -1) {
+                enemies.splice(index, 1);
+            }
+
+            // Increment cats defeated counter and update HUD
+            gameState.catsDefeated++;
+            updateHUD();
+
+            // Setup death animation state
+            enemy.userData.isDying = true;
+            enemy.userData.deathTime = 0;
+            enemy.userData.deathPhase = 'spinning'; // 'spinning', 'falling', 'lying'
+            enemy.userData.deathSpinSpeed = 15 + Math.random() * 5; // Random spin speed
+            enemy.userData.initialY = enemy.rotation.y;
+
+            // Add to dying enemies for animation
+            dyingEnemies.push(enemy);
+
+            // Respawn new enemy after delay (longer to account for death animation)
+            setTimeout(() => {
+                if (!gameState.isGameOver) {
+                    const newEnemy = createCatModel(true);
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 20 + Math.random() * 10;
+                    newEnemy.position.set(
+                        Math.cos(angle) * radius,
+                        0,
+                        Math.sin(angle) * radius
+                    );
+                    newEnemy.userData.state = 'wander';
+                    newEnemy.userData.wanderTarget = new THREE.Vector3();
+                    newEnemy.userData.lastAttackTime = 0;
+                    newEnemy.userData.health = 100;
+                    newEnemy.userData.velocity = new THREE.Vector3();
+                    newEnemy.userData.isPouncing = false;
+                    newEnemy.userData.canPounce = true;
+                    setNewWanderTarget(newEnemy);
+                    scene.add(newEnemy);
+                    enemies.push(newEnemy);
+                }
+            }, 7000); // Longer delay to allow death animation
+        }
+
+        /**
+         * Updates death animations for dying enemies
+         * @param {number} delta - Time delta
+         */
+        function updateDyingEnemies(delta) {
+            for (let i = dyingEnemies.length - 1; i >= 0; i--) {
+                const enemy = dyingEnemies[i];
+                enemy.userData.deathTime += delta;
+
+                if (enemy.userData.deathPhase === 'spinning') {
+                    // Phase 1: Spin and rise slightly (0 - 0.5s)
+                    enemy.rotation.y += enemy.userData.deathSpinSpeed * delta;
+                    enemy.position.y = Math.sin(enemy.userData.deathTime * 6) * 0.3;
+
+                    // Transition to falling after 0.5s
+                    if (enemy.userData.deathTime > 0.5) {
+                        enemy.userData.deathPhase = 'falling';
+                    }
+                } else if (enemy.userData.deathPhase === 'falling') {
+                    // Phase 2: Fall on back with paws up (0.5s - 1.2s)
+                    const fallProgress = (enemy.userData.deathTime - 0.5) / 0.7;
+
+                    // Rotate to lie on back (rotate around X axis)
+                    enemy.rotation.x = Math.min(Math.PI / 2, fallProgress * Math.PI / 2);
+
+                    // Slow down spinning
+                    enemy.rotation.y += enemy.userData.deathSpinSpeed * delta * (1 - fallProgress);
+
+                    // Fall to ground
+                    enemy.position.y = Math.max(0.3, 0.3 * (1 - fallProgress));
+
+                    // Raise legs (paws up)
+                    if (enemy.userData.legs) {
+                        enemy.userData.legs.forEach((leg, idx) => {
+                            // Front legs go up more
+                            const legRaise = idx < 2 ? 1.2 : 0.8;
+                            leg.rotation.x = -fallProgress * legRaise;
+                        });
+                    }
+
+                    // Transition to lying
+                    if (enemy.userData.deathTime > 1.2) {
+                        enemy.userData.deathPhase = 'lying';
+                        enemy.rotation.x = Math.PI / 2;
+                        enemy.position.y = 0.3;
+                    }
+                } else if (enemy.userData.deathPhase === 'lying') {
+                    // Phase 3: Lie still, then fade out (1.2s - 3s)
+                    const lyingTime = enemy.userData.deathTime - 1.2;
+
+                    // Small twitch at the start
+                    if (lyingTime < 0.3) {
+                        if (enemy.userData.legs) {
+                            enemy.userData.legs.forEach(leg => {
+                                leg.rotation.x = -1 + Math.sin(lyingTime * 20) * 0.1;
+                            });
+                        }
+                    }
+
+                    // Start fading after 1.5s of lying
+                    if (lyingTime > 1.5) {
+                        const fadeProgress = (lyingTime - 1.5) / 1.0; // Fade over 1s
+
+                        // Fade out all materials
+                        enemy.traverse(child => {
+                            if (child.isMesh && child.material) {
+                                if (!child.material.transparent) {
+                                    child.material = child.material.clone();
+                                    child.material.transparent = true;
+                                }
+                                child.material.opacity = 1 - fadeProgress;
+                            }
+                        });
+
+                        // Remove when fully faded
+                        if (fadeProgress >= 1) {
+                            scene.remove(enemy);
+                            dyingEnemies.splice(i, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ============================================
+        // CAT COLLISION DETECTION
+        // ============================================
+
+        const CAT_COLLISION_RADIUS = 1.2;  // Collision radius for cats
+        const ENEMY_SEPARATION_RADIUS = 2.5;  // Minimum distance between enemies
+        const SEPARATION_FORCE = 3;  // Force to push enemies apart
+
+        /**
+         * Handles collision between player and enemies during pounces
+         * Bounces cats off each other
+         */
+        function handlePounceCollisions() {
+            // Check player pounce collisions with enemies
+            if (gameState.isPouncing && player.position.y > 0.2) {
+                enemies.forEach(enemy => {
+                    if (enemy.userData.isPouncing) return; // Skip if enemy also pouncing
+
+                    const distance = player.position.distanceTo(enemy.position);
+                    if (distance < CAT_COLLISION_RADIUS * 2) {
+                        // Bounce both cats away from each other
+                        const bounceDir = new THREE.Vector3();
+                        bounceDir.subVectors(player.position, enemy.position);
+                        bounceDir.y = 0;
+                        bounceDir.normalize();
+
+                        // Bounce player
+                        player.userData.velocity.x += bounceDir.x * 8;
+                        player.userData.velocity.z += bounceDir.z * 8;
+
+                        // Bounce enemy
+                        enemy.userData.velocity.x -= bounceDir.x * 6;
+                        enemy.userData.velocity.z -= bounceDir.z * 6;
+                    }
+                });
+            }
+
+            // Check enemy pounce collisions with player
+            enemies.forEach(enemy => {
+                if (enemy.userData.isPouncing && enemy.position.y > 0.2) {
+                    const distance = player.position.distanceTo(enemy.position);
+                    if (distance < CAT_COLLISION_RADIUS * 2) {
+                        // Bounce both cats
+                        const bounceDir = new THREE.Vector3();
+                        bounceDir.subVectors(enemy.position, player.position);
+                        bounceDir.y = 0;
+                        bounceDir.normalize();
+
+                        // Bounce enemy
+                        enemy.userData.velocity.x += bounceDir.x * 6;
+                        enemy.userData.velocity.z += bounceDir.z * 6;
+
+                        // Bounce player
+                        player.userData.velocity.x -= bounceDir.x * 5;
+                        player.userData.velocity.z -= bounceDir.z * 5;
+                    }
+                }
+            });
+
+            // Check enemy-to-enemy pounce collisions
+            for (let i = 0; i < enemies.length; i++) {
+                const enemyA = enemies[i];
+                if (!enemyA.userData.isPouncing) continue;
+
+                for (let j = i + 1; j < enemies.length; j++) {
+                    const enemyB = enemies[j];
+                    const distance = enemyA.position.distanceTo(enemyB.position);
+
+                    if (distance < CAT_COLLISION_RADIUS * 2) {
+                        const bounceDir = new THREE.Vector3();
+                        bounceDir.subVectors(enemyA.position, enemyB.position);
+                        bounceDir.y = 0;
+                        bounceDir.normalize();
+
+                        // Bounce both enemies
+                        enemyA.userData.velocity.x += bounceDir.x * 5;
+                        enemyA.userData.velocity.z += bounceDir.z * 5;
+                        enemyB.userData.velocity.x -= bounceDir.x * 5;
+                        enemyB.userData.velocity.z -= bounceDir.z * 5;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Prevents enemies from stacking up by applying separation forces
+         * @param {number} delta - Time delta
+         */
+        function handleEnemySeparation(delta) {
+            for (let i = 0; i < enemies.length; i++) {
+                const enemyA = enemies[i];
+                if (enemyA.userData.isPouncing) continue; // Skip pouncing enemies
+
+                let separationX = 0;
+                let separationZ = 0;
+                let neighborCount = 0;
+
+                // Check against other enemies
+                for (let j = 0; j < enemies.length; j++) {
+                    if (i === j) continue;
+
+                    const enemyB = enemies[j];
+                    const dx = enemyA.position.x - enemyB.position.x;
+                    const dz = enemyA.position.z - enemyB.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+
+                    if (distance < ENEMY_SEPARATION_RADIUS && distance > 0.01) {
+                        // Calculate separation force (stronger when closer)
+                        const force = (ENEMY_SEPARATION_RADIUS - distance) / ENEMY_SEPARATION_RADIUS;
+                        separationX += (dx / distance) * force;
+                        separationZ += (dz / distance) * force;
+                        neighborCount++;
+                    }
+                }
+
+                // Also separate from player (less strongly)
+                const playerDx = enemyA.position.x - player.position.x;
+                const playerDz = enemyA.position.z - player.position.z;
+                const playerDistance = Math.sqrt(playerDx * playerDx + playerDz * playerDz);
+
+                if (playerDistance < ENEMY_SEPARATION_RADIUS * 0.8 && playerDistance > 0.01) {
+                    const force = (ENEMY_SEPARATION_RADIUS * 0.8 - playerDistance) / (ENEMY_SEPARATION_RADIUS * 0.8);
+                    separationX += (playerDx / playerDistance) * force * 0.5;
+                    separationZ += (playerDz / playerDistance) * force * 0.5;
+                    neighborCount++;
+                }
+
+                // Apply separation force to velocity
+                if (neighborCount > 0) {
+                    enemyA.userData.velocity.x += separationX * SEPARATION_FORCE * delta;
+                    enemyA.userData.velocity.z += separationZ * SEPARATION_FORCE * delta;
+                }
+            }
+        }
+
+        /**
+         * Handles ground collision between player and enemies (when both on ground)
+         */
+        function handleGroundCollisions() {
+            // Player vs enemies ground collision
+            enemies.forEach(enemy => {
+                if (player.position.y > 0.5 || enemy.position.y > 0.5) return;
+                if (enemy.userData.isPouncing || gameState.isPouncing) return;
+
+                const dx = player.position.x - enemy.position.x;
+                const dz = player.position.z - enemy.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+
+                if (distance < CAT_COLLISION_RADIUS * 1.5 && distance > 0.01) {
+                    // Push apart
+                    const overlap = CAT_COLLISION_RADIUS * 1.5 - distance;
+                    const pushX = (dx / distance) * overlap * 0.5;
+                    const pushZ = (dz / distance) * overlap * 0.5;
+
+                    // Move player and enemy apart
+                    player.position.x += pushX * 0.6;
+                    player.position.z += pushZ * 0.6;
+                    enemy.position.x -= pushX * 0.4;
+                    enemy.position.z -= pushZ * 0.4;
+
+                    // Add slight velocity push
+                    player.userData.velocity.x += pushX * 2;
+                    player.userData.velocity.z += pushZ * 2;
+                    enemy.userData.velocity.x -= pushX * 2;
+                    enemy.userData.velocity.z -= pushZ * 2;
+                }
+            });
+        }
+
+        // ============================================
+        // PLAYER MOVEMENT
+        // ============================================
+
+        /**
+         * Updates player movement based on input
+         * @param {number} delta - Time delta
+         */
+        function updatePlayer(delta) {
+            if (gameState.isGameOver) return;
+
+            const moveDirection = new THREE.Vector3();
+            let isMoving = false;
+
+            // Get camera-relative movement directions
+            const forward = new THREE.Vector3(
+                Math.sin(gameState.cameraAngle),
+                0,
+                Math.cos(gameState.cameraAngle)
+            );
+            const right = new THREE.Vector3(
+                Math.sin(gameState.cameraAngle + Math.PI / 2),
+                0,
+                Math.cos(gameState.cameraAngle + Math.PI / 2)
+            );
+
+            // WASD movement (W moves forward toward camera direction, S moves backward)
+            if (gameState.keys['KeyW']) {
+                moveDirection.sub(forward);
+                isMoving = true;
+            }
+            if (gameState.keys['KeyS']) {
+                moveDirection.add(forward);
+                isMoving = true;
+            }
+            if (gameState.keys['KeyA']) {
+                moveDirection.sub(right);
+                isMoving = true;
+            }
+            if (gameState.keys['KeyD']) {
+                moveDirection.add(right);
+                isMoving = true;
+            }
+
+            // Mobile joystick input
+            if (mobileState.joystickActive && (Math.abs(mobileState.joystickX) > 0.1 || Math.abs(mobileState.joystickY) > 0.1)) {
+                // Joystick Y is inverted (up = negative Y on screen = forward)
+                // Joystick X: positive = right
+                moveDirection.sub(forward.clone().multiplyScalar(-mobileState.joystickY));
+                moveDirection.sub(right.clone().multiplyScalar(-mobileState.joystickX));
+                isMoving = true;
+            }
+
+            // Apply inertia-based movement (acceleration toward desired direction)
+            if (!gameState.isPouncing) {
+                if (isMoving) {
+                    moveDirection.normalize();
+
+                    // Calculate target velocity
+                    const targetVelX = moveDirection.x * CONFIG.player.speed;
+                    const targetVelZ = moveDirection.z * CONFIG.player.speed;
+
+                    // Accelerate toward target velocity
+                    player.userData.velocity.x += (targetVelX - player.userData.velocity.x) * CONFIG.player.acceleration * delta;
+                    player.userData.velocity.z += (targetVelZ - player.userData.velocity.z) * CONFIG.player.acceleration * delta;
+                } else {
+                    // Apply friction when not moving
+                    const frictionFactor = Math.exp(-CONFIG.player.friction * delta);
+                    player.userData.velocity.x *= frictionFactor;
+                    player.userData.velocity.z *= frictionFactor;
+
+                    // Stop completely if very slow
+                    if (Math.abs(player.userData.velocity.x) < 0.1) player.userData.velocity.x = 0;
+                    if (Math.abs(player.userData.velocity.z) < 0.1) player.userData.velocity.z = 0;
+                }
+            }
+
+            // Apply velocity
+            const newPosition = player.position.clone();
+            newPosition.x += player.userData.velocity.x * delta;
+            newPosition.z += player.userData.velocity.z * delta;
+
+            // Apply gravity/landing for pounce - always apply gravity when airborne
+            if (player.position.y > 0 || player.userData.velocity.y > 0) {
+                player.userData.velocity.y -= 30 * delta;
+                newPosition.y += player.userData.velocity.y * delta;
+
+                // Land on ground
+                if (newPosition.y <= 0) {
+                    newPosition.y = 0;
+                    player.userData.velocity.y = 0;
+                }
+            } else {
+                // Ensure player stays grounded
+                newPosition.y = 0;
+            }
+
+            // Collision detection with sliding - resolves position and adjusts velocity
+            const resolvedPosition = resolveCollision(player.position, newPosition, player.userData.velocity);
+            player.position.copy(resolvedPosition);
+
+            // Keep player in arena
+            player.position.x = Math.max(-CONFIG.arena.size + 2,
+                Math.min(CONFIG.arena.size - 2, player.position.x));
+            player.position.z = Math.max(-CONFIG.arena.size + 2,
+                Math.min(CONFIG.arena.size - 2, player.position.z));
+            player.position.y = Math.max(0, player.position.y);
+
+            // Rotate player to face movement direction (based on velocity for smooth sliding)
+            const velocityMagnitude = Math.sqrt(
+                player.userData.velocity.x * player.userData.velocity.x +
+                player.userData.velocity.z * player.userData.velocity.z
+            );
+            if (velocityMagnitude > 0.5 && !gameState.isPouncing) {
+                const targetRotation = Math.atan2(player.userData.velocity.x, player.userData.velocity.z);
+                player.rotation.y = lerpAngle(player.rotation.y, targetRotation, 0.12);
+            }
+
+            // Animate cat (based on actual velocity, not just input)
+            const isActuallyMoving = velocityMagnitude > 0.5 || gameState.isPouncing;
+            animateCat(player, delta, isActuallyMoving);
+        }
+
+        /**
+         * Checks collision with obstacles and returns push-out vector
+         * @param {THREE.Vector3} position - Position to check
+         * @returns {THREE.Vector3|null} Push-out vector or null if no collision
+         */
+        function getCollisionPushOut(position) {
+            const entityRadius = 0.8;
+            let pushOut = new THREE.Vector3();
+            let hasCollision = false;
+
+            for (const obstacle of obstacles) {
+                if (obstacle.userData.bounds) {
+                    const bounds = obstacle.userData.bounds;
+
+                    // Expand bounds by entity radius
+                    const minX = bounds.minX - entityRadius;
+                    const maxX = bounds.maxX + entityRadius;
+                    const minZ = bounds.minZ - entityRadius;
+                    const maxZ = bounds.maxZ + entityRadius;
+
+                    // Check if inside expanded bounds
+                    if (position.x > minX && position.x < maxX &&
+                        position.z > minZ && position.z < maxZ) {
+
+                        hasCollision = true;
+
+                        // Calculate penetration depth on each axis
+                        const penetrationLeft = position.x - minX;
+                        const penetrationRight = maxX - position.x;
+                        const penetrationBack = position.z - minZ;
+                        const penetrationFront = maxZ - position.z;
+
+                        // Find minimum penetration (shortest escape)
+                        const minPenetration = Math.min(
+                            penetrationLeft, penetrationRight,
+                            penetrationBack, penetrationFront
+                        );
+
+                        // Push out in the direction of minimum penetration
+                        if (minPenetration === penetrationLeft) {
+                            pushOut.x -= penetrationLeft + 0.01;
+                        } else if (minPenetration === penetrationRight) {
+                            pushOut.x += penetrationRight + 0.01;
+                        } else if (minPenetration === penetrationBack) {
+                            pushOut.z -= penetrationBack + 0.01;
+                        } else {
+                            pushOut.z += penetrationFront + 0.01;
+                        }
+                    }
+                }
+            }
+
+            return hasCollision ? pushOut : null;
+        }
+
+        /**
+         * Applies collision resolution to a position - slides along obstacles
+         * @param {THREE.Vector3} currentPos - Current position
+         * @param {THREE.Vector3} newPos - Desired new position
+         * @param {THREE.Vector3} velocity - Velocity vector (will be modified)
+         * @returns {THREE.Vector3} Resolved position
+         */
+        function resolveCollision(currentPos, newPos, velocity) {
+            const entityRadius = 0.8;
+            const resolvedPos = newPos.clone();
+
+            for (const obstacle of obstacles) {
+                if (obstacle.userData.bounds) {
+                    const bounds = obstacle.userData.bounds;
+
+                    // Expand bounds by entity radius
+                    const minX = bounds.minX - entityRadius;
+                    const maxX = bounds.maxX + entityRadius;
+                    const minZ = bounds.minZ - entityRadius;
+                    const maxZ = bounds.maxZ + entityRadius;
+
+                    // Check if inside expanded bounds
+                    if (resolvedPos.x > minX && resolvedPos.x < maxX &&
+                        resolvedPos.z > minZ && resolvedPos.z < maxZ) {
+
+                        // Calculate penetration depth on each axis
+                        const penetrationLeft = resolvedPos.x - minX;
+                        const penetrationRight = maxX - resolvedPos.x;
+                        const penetrationBack = resolvedPos.z - minZ;
+                        const penetrationFront = maxZ - resolvedPos.z;
+
+                        // Find minimum penetration
+                        const minPenetration = Math.min(
+                            penetrationLeft, penetrationRight,
+                            penetrationBack, penetrationFront
+                        );
+
+                        // Push out and zero velocity on that axis (slide along wall)
+                        if (minPenetration === penetrationLeft) {
+                            resolvedPos.x = minX - 0.01;
+                            velocity.x = Math.min(0, velocity.x);
+                        } else if (minPenetration === penetrationRight) {
+                            resolvedPos.x = maxX + 0.01;
+                            velocity.x = Math.max(0, velocity.x);
+                        } else if (minPenetration === penetrationBack) {
+                            resolvedPos.z = minZ - 0.01;
+                            velocity.z = Math.min(0, velocity.z);
+                        } else {
+                            resolvedPos.z = maxZ + 0.01;
+                            velocity.z = Math.max(0, velocity.z);
+                        }
+                    }
+                }
+            }
+
+            return resolvedPos;
+        }
+
+        /**
+         * Pushes an entity out of any obstacles it's stuck in
+         * @param {THREE.Group} entity - The entity to push out
+         */
+        function pushEntityOutOfObstacles(entity) {
+            const pushOut = getCollisionPushOut(entity.position);
+            if (pushOut) {
+                entity.position.add(pushOut);
+                // Also reset velocity in the direction we pushed
+                if (entity.userData.velocity) {
+                    if (Math.abs(pushOut.x) > 0.01) {
+                        entity.userData.velocity.x = 0;
+                    }
+                    if (Math.abs(pushOut.z) > 0.01) {
+                        entity.userData.velocity.z = 0;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Lerps between two angles
+         * @param {number} a - Start angle
+         * @param {number} b - End angle
+         * @param {number} t - Interpolation factor
+         * @returns {number} Interpolated angle
+         */
+        function lerpAngle(a, b, t) {
+            let diff = b - a;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            return a + diff * t;
+        }
+
+        // ============================================
+        // ENEMY AI
+        // ============================================
+
+        /**
+         * Updates all enemy AI
+         * @param {number} delta - Time delta
+         */
+        function updateEnemies(delta) {
+            const currentTime = Date.now();
+
+            enemies.forEach(enemy => {
+                const distanceToPlayer = enemy.position.distanceTo(player.position);
+
+                // Initialize pounce state if not set
+                if (enemy.userData.isPouncing === undefined) {
+                    enemy.userData.isPouncing = false;
+                    enemy.userData.canPounce = true;
+                }
+
+                // Handle pouncing state
+                if (enemy.userData.isPouncing) {
+                    // Apply pounce velocity with collision resolution
+                    const pounceNewPos = enemy.position.clone();
+                    pounceNewPos.x += enemy.userData.velocity.x * delta;
+                    pounceNewPos.z += enemy.userData.velocity.z * delta;
+                    const pounceResolvedPos = resolveCollision(enemy.position, pounceNewPos, enemy.userData.velocity);
+                    enemy.position.x = pounceResolvedPos.x;
+                    enemy.position.z = pounceResolvedPos.z;
+
+                    enemy.userData.velocity.y -= 25 * delta;
+                    enemy.position.y += enemy.userData.velocity.y * delta;
+
+                    // Check for mid-air collision with player (if not already hit this pounce)
+                    if (!enemy.userData.pounceHitPlayer) {
+                        const midAirDistance = enemy.position.distanceTo(player.position);
+                        // Use a generous hit radius that accounts for both cats' sizes
+                        if (midAirDistance < 2.0) {
+                            enemy.userData.pounceHitPlayer = true;
+                            dealDamageToPlayer(enemy);
+                        }
+                    }
+
+                    // Land on ground
+                    if (enemy.position.y <= 0) {
+                        enemy.position.y = 0;
+                        enemy.userData.velocity.set(0, 0, 0);
+                        enemy.userData.isPouncing = false;
+                        enemy.userData.pounceHitPlayer = false; // Reset for next pounce
+                    }
+
+                    // Keep in arena during pounce
+                    enemy.position.x = Math.max(-CONFIG.arena.size + 2,
+                        Math.min(CONFIG.arena.size - 2, enemy.position.x));
+                    enemy.position.z = Math.max(-CONFIG.arena.size + 2,
+                        Math.min(CONFIG.arena.size - 2, enemy.position.z));
+
+                    animateCat(enemy, delta, true);
+                    return; // Skip normal movement while pouncing
+                }
+
+                // State machine
+                if (distanceToPlayer < CONFIG.enemy.detectionRange) {
+                    enemy.userData.state = 'chase';
+                } else {
+                    enemy.userData.state = 'wander';
+                }
+
+                let moveDirection = new THREE.Vector3();
+                let isMoving = false;
+
+                if (enemy.userData.state === 'chase') {
+                    // Chase player
+                    moveDirection.subVectors(player.position, enemy.position);
+                    moveDirection.y = 0;
+                    moveDirection.normalize();
+                    isMoving = true;
+
+                    // Pounce attack if in range and can pounce
+                    if (distanceToPlayer < CONFIG.enemy.pounceRange && enemy.userData.canPounce) {
+                        if (currentTime - enemy.userData.lastAttackTime > CONFIG.enemy.attackCooldown) {
+                            triggerEnemyPounce(enemy);
+                            enemy.userData.lastAttackTime = currentTime;
+                        }
+                    }
+                } else {
+                    // Wander
+                    const distanceToTarget = enemy.position.distanceTo(enemy.userData.wanderTarget);
+
+                    if (distanceToTarget < 1) {
+                        setNewWanderTarget(enemy);
+                    }
+
+                    moveDirection.subVectors(enemy.userData.wanderTarget, enemy.position);
+                    moveDirection.y = 0;
+
+                    if (moveDirection.length() > 0.1) {
+                        moveDirection.normalize();
+                        isMoving = true;
+                    }
+                }
+
+                // Calculate target speed based on state and damage
+                let targetSpeed = enemy.userData.state === 'chase' ?
+                    CONFIG.enemy.speed : CONFIG.enemy.speed * 0.4;
+
+                // Apply damage slowdown: 10% slower per damage level
+                const damageLevel = enemy.userData.damageLevel || 0;
+                const damageSlowdown = 1 - (damageLevel * 0.1);
+                targetSpeed *= damageSlowdown;
+
+                // Apply inertia-based movement
+                if (isMoving) {
+                    // Calculate target velocity
+                    const targetVelX = moveDirection.x * targetSpeed;
+                    const targetVelZ = moveDirection.z * targetSpeed;
+
+                    // Accelerate toward target velocity
+                    enemy.userData.velocity.x += (targetVelX - enemy.userData.velocity.x) * CONFIG.enemy.acceleration * delta;
+                    enemy.userData.velocity.z += (targetVelZ - enemy.userData.velocity.z) * CONFIG.enemy.acceleration * delta;
+                } else {
+                    // Apply friction when not moving
+                    const frictionFactor = Math.exp(-CONFIG.enemy.friction * delta);
+                    enemy.userData.velocity.x *= frictionFactor;
+                    enemy.userData.velocity.z *= frictionFactor;
+                }
+
+                // Apply velocity to position with collision resolution
+                const enemyNewPos = enemy.position.clone();
+                enemyNewPos.x += enemy.userData.velocity.x * delta;
+                enemyNewPos.z += enemy.userData.velocity.z * delta;
+                const enemyResolvedPos = resolveCollision(enemy.position, enemyNewPos, enemy.userData.velocity);
+                enemy.position.copy(enemyResolvedPos);
+
+                // Rotate to face velocity direction (smooth sliding)
+                const enemyVelMagnitude = Math.sqrt(
+                    enemy.userData.velocity.x * enemy.userData.velocity.x +
+                    enemy.userData.velocity.z * enemy.userData.velocity.z
+                );
+                if (enemyVelMagnitude > 0.3) {
+                    const targetRotation = Math.atan2(enemy.userData.velocity.x, enemy.userData.velocity.z);
+                    enemy.rotation.y = lerpAngle(enemy.rotation.y, targetRotation, 0.08);
+                }
+
+                // Keep in arena
+                enemy.position.x = Math.max(-CONFIG.arena.size + 2,
+                    Math.min(CONFIG.arena.size - 2, enemy.position.x));
+                enemy.position.z = Math.max(-CONFIG.arena.size + 2,
+                    Math.min(CONFIG.arena.size - 2, enemy.position.z));
+
+                // Animate based on actual velocity
+                const enemyActuallyMoving = enemyVelMagnitude > 0.3;
+                animateCat(enemy, delta, enemyActuallyMoving);
+            });
+        }
+
+        /**
+         * Triggers an enemy pounce attack toward the player
+         * @param {THREE.Group} enemy - The attacking enemy
+         */
+        function triggerEnemyPounce(enemy) {
+            enemy.userData.isPouncing = true;
+            enemy.userData.canPounce = false;
+            enemy.userData.pounceHitPlayer = false; // Track if this pounce has hit
+
+            // Calculate pounce direction toward player
+            const pounceDirection = new THREE.Vector3();
+            pounceDirection.subVectors(player.position, enemy.position);
+            pounceDirection.y = 0;
+            pounceDirection.normalize();
+
+            // Apply pounce velocity
+            enemy.userData.velocity = new THREE.Vector3(
+                pounceDirection.x * CONFIG.enemy.pounceForce,
+                6, // Upward arc
+                pounceDirection.z * CONFIG.enemy.pounceForce
+            );
+
+            // Rotate to face player
+            const targetRotation = Math.atan2(pounceDirection.x, pounceDirection.z);
+            enemy.rotation.y = targetRotation;
+
+            // Reset pounce cooldown
+            setTimeout(() => {
+                enemy.userData.canPounce = true;
+            }, CONFIG.enemy.attackCooldown);
+        }
+
+        /**
+         * Deals damage to the player (called when enemy pounce lands)
+         * @param {THREE.Group} enemy - The attacking enemy
+         */
+        function dealDamageToPlayer(enemy) {
+            gameState.playerHealth -= CONFIG.enemy.damage;
+
+            // Visual feedback
+            flashEntity(player, 0xff0000);
+
+            // Knockback player away from enemy
+            const knockback = new THREE.Vector3();
+            knockback.subVectors(player.position, enemy.position);
+            knockback.normalize();
+            knockback.multiplyScalar(3);
+            player.userData.velocity.add(knockback);
+
+            // Update HUD
+            updateHUD();
+
+            // Check game over
+            if (gameState.playerHealth <= 0) {
+                gameState.playerHealth = 0;
+                gameOver();
+            }
+        }
+
+        // ============================================
+        // MOUSE PICKUPS
+        // ============================================
+
+        /**
+         * Updates mouse pickups
+         * @param {number} delta - Time delta
+         */
+        function updateMice(delta) {
+            mice.forEach((mouse, index) => {
+                if (!mouse.userData.active) return;
+
+                // Animate mouse (bobbing)
+                mouse.userData.animTime += delta * 3;
+                mouse.position.y = 0.2 + Math.sin(mouse.userData.animTime) * 0.1;
+                mouse.rotation.y += delta * 2;
+
+                // Check collision with player
+                const distance = player.position.distanceTo(mouse.position);
+                if (distance < 1.5) {
+                    collectMouse(mouse, index);
+                }
+            });
+        }
+
+        /**
+         * Collects a mouse pickup
+         * @param {THREE.Group} mouse - The mouse to collect
+         * @param {number} index - The mouse index
+         */
+        function collectMouse(mouse, index) {
+            mouse.userData.active = false;
+            scene.remove(mouse);
+
+            // Heal player
+            gameState.playerHealth = Math.min(
+                CONFIG.player.maxHealth,
+                gameState.playerHealth + CONFIG.mouse.healAmount
+            );
+
+            // Increment counter
+            gameState.miceCaught++;
+
+            // Update HUD
+            updateHUD();
+
+            // Respawn mouse after delay
+            setTimeout(() => {
+                if (!gameState.isGameOver) {
+                    const newMouse = createMouseModel();
+                    const x = (Math.random() - 0.5) * (CONFIG.arena.size - 5) * 2;
+                    const z = (Math.random() - 0.5) * (CONFIG.arena.size - 5) * 2;
+                    newMouse.position.set(x, 0, z);
+                    newMouse.userData.active = true;
+                    scene.add(newMouse);
+                    mice[index] = newMouse;
+                }
+            }, CONFIG.mouse.respawnTime);
+        }
+
+        // ============================================
+        // CAMERA
+        // ============================================
+
+        /**
+         * Updates camera position
+         */
+        function updateCamera() {
+            // Calculate camera position behind player
+            const cameraOffset = new THREE.Vector3(
+                Math.sin(gameState.cameraAngle) * CONFIG.camera.distance,
+                CONFIG.camera.height,
+                Math.cos(gameState.cameraAngle) * CONFIG.camera.distance
+            );
+
+            const targetPosition = player.position.clone().add(cameraOffset);
+
+            // Smooth camera movement
+            camera.position.lerp(targetPosition, CONFIG.camera.smoothing);
+
+            // Look at player
+            const lookTarget = player.position.clone();
+            lookTarget.y += 1;
+            camera.lookAt(lookTarget);
+        }
+
+        // ============================================
+        // UI UPDATES
+        // ============================================
+
+        /**
+         * Updates HUD elements
+         */
+        function updateHUD() {
+            const healthPercent = (gameState.playerHealth / CONFIG.player.maxHealth) * 100;
+            document.getElementById('health-bar').style.width = healthPercent + '%';
+            document.getElementById('health-text').textContent =
+                `${Math.ceil(gameState.playerHealth)} / ${CONFIG.player.maxHealth}`;
+
+            // Change color based on health
+            const healthBar = document.getElementById('health-bar');
+            if (healthPercent > 50) {
+                healthBar.style.background = 'linear-gradient(to right, #4CAF50, #8BC34A)';
+            } else if (healthPercent > 25) {
+                healthBar.style.background = 'linear-gradient(to right, #ff9800, #ffcc00)';
+            } else {
+                healthBar.style.background = 'linear-gradient(to right, #ff4444, #ff6b6b)';
+            }
+
+            // Update stats
+            document.getElementById('cats-defeated').textContent = gameState.catsDefeated;
+            document.getElementById('mice-count').textContent = gameState.miceCaught;
+            document.getElementById('time-played').textContent = formatTime(gameState.timePlayed);
+
+            // Calculate and update total score
+            const totalScore = calculateScore();
+            document.getElementById('total-score').textContent = totalScore;
+        }
+
+        /**
+         * Formats seconds into M:SS format
+         * @param {number} seconds - Time in seconds
+         * @returns {string} Formatted time string
+         */
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        /**
+         * Calculates the total score
+         * @returns {number} Total score
+         */
+        function calculateScore() {
+            const catScore = gameState.catsDefeated * SCORE.perCatDefeated;
+            const mouseScore = gameState.miceCaught * SCORE.perMouseCaught;
+            const timeScore = Math.floor(gameState.timePlayed) * SCORE.perSecondSurvived;
+            return catScore + mouseScore + timeScore;
+        }
+
+        /**
+         * Handles game over
+         */
+        function gameOver() {
+            gameState.isGameOver = true;
+
+            // Calculate score breakdown
+            const catScore = gameState.catsDefeated * SCORE.perCatDefeated;
+            const mouseScore = gameState.miceCaught * SCORE.perMouseCaught;
+            const timeScore = Math.floor(gameState.timePlayed) * SCORE.perSecondSurvived;
+            const totalScore = catScore + mouseScore + timeScore;
+
+            // Update game over screen with score breakdown
+            document.getElementById('final-cats').textContent = gameState.catsDefeated;
+            document.getElementById('final-cats-score').textContent = catScore;
+            document.getElementById('final-mice').textContent = gameState.miceCaught;
+            document.getElementById('final-mice-score').textContent = mouseScore;
+            document.getElementById('final-time').textContent = formatTime(gameState.timePlayed);
+            document.getElementById('final-time-score').textContent = timeScore;
+            document.getElementById('final-total-score').textContent = totalScore;
+
+            document.getElementById('game-over').style.display = 'flex';
+            document.exitPointerLock();
+        }
+
+        /**
+         * Restarts the game
+         */
+        function restartGame() {
+            // Reset game state
+            gameState.playerHealth = CONFIG.player.maxHealth;
+            gameState.miceCaught = 0;
+            gameState.catsDefeated = 0;
+            gameState.timePlayed = 0;
+            gameState.startTime = Date.now();
+            gameState.isGameOver = false;
+            gameState.isPouncing = false;
+            gameState.canPounce = true;
+            gameState.currentEnemyCount = CONFIG.enemy.startCount;
+
+            // Reset mobile controls state
+            mobileState.joystickActive = false;
+            mobileState.joystickX = 0;
+            mobileState.joystickY = 0;
+            mobileState.cameraTouchId = null;
+            updatePounceCooldownVisual();
+
+            // Reset joystick visual if on mobile
+            const joystickStick = document.getElementById('joystick-stick');
+            if (joystickStick) {
+                joystickStick.style.left = '50%';
+                joystickStick.style.top = '50%';
+            }
+
+            // Clear spawn timer
+            if (gameState.enemySpawnTimer) {
+                clearInterval(gameState.enemySpawnTimer);
+            }
+
+            // Recreate player to reset materials (fixes red color after game over)
+            scene.remove(player);
+            createPlayer();
+
+            // Reset enemies (starts with 2 and gradually increases)
+            enemies.forEach(enemy => scene.remove(enemy));
+            enemies.length = 0;
+
+            // Clear dying enemies
+            dyingEnemies.forEach(enemy => scene.remove(enemy));
+            dyingEnemies.length = 0;
+
+            createEnemies();
+
+            // Reset mice
+            mice.forEach(mouse => scene.remove(mouse));
+            mice.length = 0;
+            spawnMice();
+
+            // Update UI
+            updateHUD();
+            document.getElementById('game-over').style.display = 'none';
+
+            // Re-lock pointer (only on desktop)
+            if (!mobileState.isMobile) {
+                renderer.domElement.requestPointerLock();
+            }
+        }
+
+        // ============================================
+        // WINDOW RESIZE
+        // ============================================
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ============================================
+        // GAME INITIALIZATION
+        // ============================================
+
+        /**
+         * Initializes all game systems
+         */
+        function init() {
+            // Create environment
+            createGround();
+            createWalls();
+            createCrates();
+
+            // Create entities
+            createPlayer();
+            createEnemies();
+            spawnMice();
+
+            // Setup input
+            setupInput();
+
+            // Initial HUD update
+            updateHUD();
+
+            // Position camera initially
+            camera.position.set(0, CONFIG.camera.height, CONFIG.camera.distance);
+            camera.lookAt(0, 1, 0);
+
+            if (mobileState.isMobile) {
+                console.log('🐱 Cat Combat initialized! Use joystick to move, tap POUNCE to attack.');
+            } else {
+                console.log('🐱 Cat Combat initialized! Click to start playing.');
+            }
+        }
+
+        // ============================================
+        // MAIN GAME LOOP
+        // ============================================
+
+        let lastTime = 0;
+
+        /**
+         * Main animation/game loop
+         * @param {number} currentTime - Current timestamp
+         */
+        function gameLoop(currentTime) {
+            requestAnimationFrame(gameLoop);
+
+            // Calculate delta time (capped to prevent large jumps)
+            const delta = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+
+            if (!gameState.isGameOver) {
+                // Update time played
+                gameState.timePlayed += delta;
+
+                // First, push any stuck entities out of obstacles
+                pushEntityOutOfObstacles(player);
+                enemies.forEach(enemy => pushEntityOutOfObstacles(enemy));
+
+                // Update all game systems
+                updatePlayer(delta);
+                updateEnemies(delta);
+                updateMice(delta);
+                updateDyingEnemies(delta);
+
+                // Handle cat-to-cat collisions
+                handlePounceCollisions();
+                handleEnemySeparation(delta);
+                handleGroundCollisions();
+
+                // Update HUD (for time display)
+                updateHUD();
+
+                updateCamera();
+            }
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        // Start the game
+        init();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
